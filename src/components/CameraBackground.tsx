@@ -3,53 +3,39 @@ import React, { useEffect, useRef, useState } from 'react';
 const CameraBackground: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
 
-  useEffect(() => {
-    async function setupCamera() {
-      const constraints = [
-        {
-          video: {
-            facingMode: 'environment',
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          },
-          audio: false,
+  const setupCamera = async () => {
+    setError(null);
+    try {
+      // Simplest possible constraints for maximum compatibility
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
         },
-        {
-          video: { facingMode: 'environment' },
-          audio: false,
-        },
-        {
-          video: true,
-          audio: false,
-        }
-      ];
+        audio: false,
+      });
 
-      let stream: MediaStream | null = null;
-      
-      for (const constraint of constraints) {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia(constraint);
-          if (stream) break;
-        } catch (err) {
-          console.warn("Failed to get camera with constraint:", constraint, err);
-        }
-      }
-
-      if (stream && videoRef.current) {
+      if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        // Ensure video plays on iOS
-        videoRef.current.play().catch(e => {
-          console.error("Video play failed:", e);
-          setError("Tap to start camera if it doesn't appear.");
-        });
+        await videoRef.current.play();
+        setIsStreaming(true);
+      }
+    } catch (err: any) {
+      console.error("Camera error:", err);
+      if (err.name === 'NotAllowedError') {
+        setError("Camera access denied. Please allow camera access in Safari settings.");
+      } else if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        setError("Safari requires HTTPS to use the camera. Please use a secure connection.");
       } else {
-        setError("Could not access camera. Please ensure permissions are granted.");
+        setError(`Camera Error: ${err.message || "Unknown error"}`);
       }
     }
+  };
 
+  useEffect(() => {
     setupCamera();
-
+    
     return () => {
       if (videoRef.current && videoRef.current.srcObject) {
         const stream = videoRef.current.srcObject as MediaStream;
@@ -65,7 +51,6 @@ const CameraBackground: React.FC = () => {
         autoPlay
         playsInline
         muted
-        webkit-playsinline="true"
         style={{
           position: 'fixed',
           top: 0,
@@ -77,21 +62,45 @@ const CameraBackground: React.FC = () => {
           background: 'black'
         }}
       />
-      {error && (
+      
+      {(!isStreaming || error) && (
         <div style={{
           position: 'fixed',
-          top: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'rgba(255,0,0,0.7)',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: isStreaming ? 'transparent' : 'rgba(0,0,0,0.8)',
+          zIndex: 500,
+          padding: '20px',
+          textAlign: 'center',
           color: 'white',
-          padding: '10px 20px',
-          borderRadius: '20px',
-          zIndex: 1000,
-          fontSize: '14px',
           fontFamily: "'Figtree', sans-serif"
         }}>
-          {error}
+          {error ? (
+            <div style={{ marginBottom: '20px', color: '#ff4d4d' }}>{error}</div>
+          ) : (
+            <p style={{ marginBottom: '20px' }}>Camera initialization required for AR tracing.</p>
+          )}
+          <button 
+            onClick={setupCamera}
+            style={{
+              padding: '12px 24px',
+              borderRadius: '30px',
+              border: 'none',
+              background: '#ffffff',
+              color: '#000000',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: '16px'
+            }}
+          >
+            {error ? "Try Again" : "Enable Camera"}
+          </button>
         </div>
       )}
     </>

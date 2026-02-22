@@ -70,7 +70,7 @@ function App() {
   const selectedImage = images.find((img) => img.id === selectedId);
 
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden', background: 'black' }}>
       <CameraBackground />
 
       <Stage
@@ -96,7 +96,7 @@ function App() {
       {/* UI Controls */}
       <div style={{
         position: 'absolute',
-        bottom: '20px',
+        bottom: 'calc(20px + env(safe-area-inset-bottom))',
         left: '50%',
         transform: 'translateX(-50%)',
         display: 'flex',

@@ -109,7 +109,8 @@ function App() {
         color: 'white',
         zIndex: 100,
         width: '90%',
-        maxWidth: '400px'
+        maxWidth: '400px',
+        fontFamily: "'Figtree', sans-serif"
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>

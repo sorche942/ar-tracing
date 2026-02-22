@@ -68,6 +68,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({ imageProps, isSelected,
       {isSelected && (
         <Transformer
           ref={trRef}
+          rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
           boundBoxFunc={(oldBox, newBox) => {
             // limit resize
             if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) {

@@ -70,7 +70,12 @@ function App() {
   const selectedImage = images.find((img) => img.id === selectedId);
 
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden', background: 'black' }}>
+    <div style={{ 
+      position: 'relative', 
+      width: '100vw', 
+      height: '100dvh', 
+      overflow: 'hidden',
+    }}>
       <CameraBackground />
 
       <Stage
@@ -78,7 +83,7 @@ function App() {
         height={window.innerHeight}
         onMouseDown={checkDeselect}
         onTouchStart={checkDeselect}
-        style={{ position: 'absolute', top: 0, left: 0 }}
+        style={{ position: 'absolute', top: 0, left: 0, zIndex: 2 }}
       >
         <Layer>
           {images.map((img) => (

@@ -8,7 +8,6 @@ const CameraBackground: React.FC = () => {
   const setupCamera = async () => {
     setError(null);
     try {
-      // Simplest possible constraints for maximum compatibility
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'environment',
@@ -18,18 +17,19 @@ const CameraBackground: React.FC = () => {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setIsStreaming(true);
+        // Safari fix: ensure video is ready before playing
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().then(() => {
+            setIsStreaming(true);
+          }).catch(e => {
+            console.error("Play failed:", e);
+            setError("Tap 'Enable Camera' to start video feed.");
+          });
+        };
       }
     } catch (err: any) {
-      console.error("Camera error:", err);
-      if (err.name === 'NotAllowedError') {
-        setError("Camera access denied. Please allow camera access in Safari settings.");
-      } else if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        setError("Safari requires HTTPS to use the camera. Please use a secure connection.");
-      } else {
-        setError(`Camera Error: ${err.message || "Unknown error"}`);
-      }
+      console.error("Camera access error:", err);
+      setError(`Camera Error: ${err.message || "Unknown error"}`);
     }
   };
 
@@ -51,14 +51,17 @@ const CameraBackground: React.FC = () => {
         autoPlay
         playsInline
         muted
+        // Safari specific attributes
+        controls={false}
         style={{
-          position: 'fixed',
+          position: 'absolute',
           top: 0,
           left: 0,
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          zIndex: -1,
+          zIndex: 1, // Base layer
+          pointerEvents: 'none', // Critical: allows clicks to pass through to Konva
           background: 'black'
         }}
       />
@@ -74,8 +77,8 @@ const CameraBackground: React.FC = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: isStreaming ? 'transparent' : 'rgba(0,0,0,0.8)',
-          zIndex: 500,
+          background: 'rgba(0,0,0,0.8)',
+          zIndex: 500, // Above video but below UI
           padding: '20px',
           textAlign: 'center',
           color: 'white',
@@ -84,7 +87,7 @@ const CameraBackground: React.FC = () => {
           {error ? (
             <div style={{ marginBottom: '20px', color: '#ff4d4d' }}>{error}</div>
           ) : (
-            <p style={{ marginBottom: '20px' }}>Camera initialization required for AR tracing.</p>
+            <p style={{ marginBottom: '20px' }}>Waiting for camera...</p>
           )}
           <button 
             onClick={setupCamera}

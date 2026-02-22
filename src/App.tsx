@@ -117,15 +117,37 @@ function App() {
         maxWidth: '400px',
         fontFamily: "'Figtree', sans-serif"
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+          <label style={{ 
+            cursor: 'pointer', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px',
+            background: 'rgba(255,255,255,0.15)',
+            padding: '10px 16px',
+            borderRadius: '10px',
+            flex: 1,
+            justifyContent: 'center',
+            transition: 'background 0.2s'
+          }}>
             <Upload size={20} />
-            <span>Add Image</span>
+            <span style={{ fontWeight: 500 }}>Add Image</span>
             <input type="file" accept="image/*" onChange={handleUpload} style={{ display: 'none' }} />
           </label>
           
           {selectedId && (
-            <button onClick={removeSelected} style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <button onClick={removeSelected} style={{ 
+              background: 'rgba(255, 77, 77, 0.2)', 
+              border: 'none', 
+              color: '#ff4d4d', 
+              cursor: 'pointer', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              padding: '10px 16px',
+              borderRadius: '10px',
+              fontWeight: 500
+            }}>
               <Trash2 size={20} />
               <span>Remove</span>
             </button>

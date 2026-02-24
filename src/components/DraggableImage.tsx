@@ -23,6 +23,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({ imageProps, isSelected,
   const [img] = useImage(imageProps.src);
   const shapeRef = useRef<Konva.Image>(null);
   const trRef = useRef<Konva.Transformer>(null);
+  const isCoarsePointer = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
   useEffect(() => {
     if (isSelected && trRef.current && shapeRef.current) {
@@ -69,6 +70,10 @@ const DraggableImage: React.FC<DraggableImageProps> = ({ imageProps, isSelected,
         <Transformer
           ref={trRef}
           rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
+          anchorSize={isCoarsePointer ? 28 : 12}
+          padding={isCoarsePointer ? 16 : 8}
+          rotateAnchorOffset={isCoarsePointer ? 50 : 30}
+          borderStrokeWidth={isCoarsePointer ? 2 : 1}
           boundBoxFunc={(oldBox, newBox) => {
             // limit resize
             if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) {

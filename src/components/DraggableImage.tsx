@@ -23,6 +23,11 @@ const DraggableImage: React.FC<DraggableImageProps> = ({ imageProps, isSelected,
   const [img] = useImage(imageProps.src);
   const shapeRef = useRef<Konva.Image>(null);
   const trRef = useRef<Konva.Transformer>(null);
+  const lastDist = useRef<number>(0);
+  const startScale = useRef<{ x: number, y: number }>({ x: 1, y: 1 });
+  const startPos = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
+  const startCenter = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
+  
   const isCoarsePointer = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
   const anchorSize = isCoarsePointer ? 30 : 16;
   const selectionColor = '#c4b5fd';
@@ -35,6 +40,17 @@ const DraggableImage: React.FC<DraggableImageProps> = ({ imageProps, isSelected,
     }
   }, [isSelected]);
 
+  const getDistance = (p1: { x: number, y: number }, p2: { x: number, y: number }) => {
+    return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+  };
+
+  const getCenter = (p1: { x: number, y: number }, p2: { x: number, y: number }) => {
+    return {
+      x: (p1.x + p2.x) / 2,
+      y: (p1.y + p2.y) / 2,
+    };
+  };
+
   return (
     <React.Fragment>
       <Image
@@ -44,6 +60,67 @@ const DraggableImage: React.FC<DraggableImageProps> = ({ imageProps, isSelected,
         {...imageProps}
         image={img}
         draggable
+        onTouchStart={(e) => {
+          if (e.evt.touches.length === 2) {
+            if (!isSelected) {
+              onSelect();
+            }
+            const p1 = {
+              x: e.evt.touches[0].clientX,
+              y: e.evt.touches[0].clientY,
+            };
+            const p2 = {
+              x: e.evt.touches[1].clientX,
+              y: e.evt.touches[1].clientY,
+            };
+            lastDist.current = getDistance(p1, p2);
+            startScale.current = { x: imageProps.scaleX, y: imageProps.scaleY };
+            startPos.current = { x: imageProps.x, y: imageProps.y };
+            startCenter.current = getCenter(p1, p2);
+          }
+        }}
+        onTouchMove={(e) => {
+          if (e.evt.touches.length === 2 && isSelected) {
+            if (e.evt.cancelable) {
+              e.evt.preventDefault();
+            }
+            // Stop dragging when pinching
+            e.target.stopDrag();
+            
+            const p1 = {
+              x: e.evt.touches[0].clientX,
+              y: e.evt.touches[0].clientY,
+            };
+            const p2 = {
+              x: e.evt.touches[1].clientX,
+              y: e.evt.touches[1].clientY,
+            };
+
+            const dist = getDistance(p1, p2);
+            if (lastDist.current > 0) {
+              const scaleRatio = dist / lastDist.current;
+              const newScaleX = startScale.current.x * scaleRatio;
+              const newScaleY = startScale.current.y * scaleRatio;
+
+              // Calculate new position to scale from center of pinch
+              const newX = startCenter.current.x + (startPos.current.x - startCenter.current.x) * scaleRatio;
+              const newY = startCenter.current.y + (startPos.current.y - startCenter.current.y) * scaleRatio;
+
+              if (Math.abs(newScaleX) > 0.05 && Math.abs(newScaleY) > 0.05) {
+                onChange({
+                  ...imageProps,
+                  x: newX,
+                  y: newY,
+                  scaleX: newScaleX,
+                  scaleY: newScaleY,
+                });
+              }
+            }
+          }
+        }}
+        onTouchEnd={() => {
+          lastDist.current = 0;
+        }}
         onDragMove={(e) => {
           onChange({
             ...imageProps,
@@ -100,7 +177,6 @@ const DraggableImage: React.FC<DraggableImageProps> = ({ imageProps, isSelected,
           scaleY={imageProps.scaleY}
           stroke={selectionColor}
           strokeWidth={isCoarsePointer ? 3 : 2}
-          cornerRadius={isCoarsePointer ? 14 : 10}
           shadowColor="rgba(196,181,253,0.45)"
           shadowBlur={isCoarsePointer ? 14 : 10}
           shadowEnabled
